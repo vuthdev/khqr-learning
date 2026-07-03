@@ -1,40 +1,145 @@
 package bakong
 
-// Client wraps calls to the Bakong Open API sandbox (SIT) environment.
-// Base URL for SIT: https://sit-api-bakong.nbc.gov.kh
-// Base URL for production: https://api-bakong.nbc.gov.kh
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"khqr-learn/internal/constant"
+	"khqr-learn/internal/constant/utils"
+	"net/http"
+	"time"
+)
+
+const (
+	account_id_enpoints = "/v1/check_bakong_account"
+	check_transaction_by_md5_endpoints = "/v1/check_transaction_by_md5"
+)
+
 type Client struct {
-	Token   string // your developer token from api-bakong.nbc.gov.kh/register/
+	Token   string
 	BaseURL string
 }
 
-// NewClient creates a client pointed at the sandbox by default.
-// TODO(you): fill in BaseURL default.
+type BakongResponse struct {
+	ResponseCode *int `json:"responseCode"`
+	ResponseMessage string `json:"responseMessage"`
+	ErrorCode *int `json:"errorCode"`
+	Data interface{} `json:"data"`
+}
+
 func NewClient(token string) *Client {
-	panic("not implemented")
+	return &Client{
+		Token: token,
+		BaseURL: constant.BaseURL,
+	}
 }
 
-// CheckTransactionByMD5 asks Bakong whether the transaction matching
-// this MD5 hash has been paid.
-//
-// TODO(you):
-//  1. Build a POST request to {BaseURL}/v1/check_transaction_by_md5
-//  2. Set header: Authorization: Bearer {Token}
-//  3. Body: {"md5": "<hash>"}
-//  4. Parse the JSON response — look at the SDK docs/PDF for the exact
-//     shape (responseCode, responseMessage, data.status or similar).
-//
-// Return a simple string status ("PAID", "UNPAID", "ERROR") to start —
-// you can build a richer struct once you see the real response shape.
+// {BaseURL}/v1/check_transaction_by_md5
+type md5Payload struct {
+	Md5 string `json:"md5"`
+}
+
 func (c *Client) CheckTransactionByMD5(md5Hash string) (string, error) {
-	panic("not implemented")
+	payload := md5Payload { Md5: md5Hash }
+
+	json_data := utils.ToJson(payload)
+	client := http.Client {
+		Timeout: 10 * time.Second,
+	}
+
+	fmt.Printf("Json data: %v", json_data)
+
+	req, err := http.NewRequest("POST", c.BaseURL + check_transaction_by_md5_endpoints, bytes.NewBuffer([]byte(json_data)))
+	if err != nil {
+		return "ERROR", fmt.Errorf("Error creating request: %v\n", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer " + c.Token)
+	req.Header.Set("Content-Type", "application/json")
+
+	fmt.Printf("Body: %v", req.Body)
+	res, err := client.Do(req)
+	if err != nil {
+		return "ERROR", fmt.Errorf("Error sending request: %v\n", err)
+	}
+
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "ERROR", fmt.Errorf("Error reading response: %v\n", err)
+	}
+
+	var apiResponse BakongResponse
+
+	_, err = utils.JsonUnmarshal(body, &apiResponse)
+	if err != nil {
+		return "ERROR", fmt.Errorf("Error decoding response")
+	}
+
+	if apiResponse.ResponseCode == nil {
+		return "ERROR", fmt.Errorf("response missing responseCode")
+	}
+
+	data := apiResponse.Data.(map[string]any)
+
+	if *apiResponse.ResponseCode == 0 && data["hash"] != nil {
+		return "PAID", nil
+	} else {
+		return "UNPAID", err
+	}
 }
 
-// CheckAccountByID verifies a Bakong account ID exists/is valid.
-// Useful sanity check before generating a QR for an account.
 // Endpoint: {BaseURL}/v1/check_account_by_id
-//
-// TODO(you): implement similarly to CheckTransactionByMD5.
+type accountIDPayload struct {
+	AccountID string `json:"accountId"`
+}
+
 func (c *Client) CheckAccountByID(accountID string) (bool, error) {
-	panic("not implemented")
+	payload := accountIDPayload{ AccountID: accountID }
+
+	json_data := utils.ToJson(payload)
+	client := http.Client {
+		Timeout: 10 * time.Second,
+	}
+
+	fmt.Printf("Json data: %v\n", json_data)
+
+	req, err := http.NewRequest("POST", c.BaseURL + account_id_enpoints, bytes.NewBuffer([]byte(json_data)))
+	if err != nil {
+		return false, fmt.Errorf("Error creating request: %v\n", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer " + c.Token)
+	req.Header.Set("Content-Type", "application/json")
+
+	fmt.Printf("Body: %v\n", req.Body)
+	res, err := client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("Error sending request: %v\n", err)
+	}
+
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return false, fmt.Errorf("Error reading response: %v\n", err)
+	}
+
+	var apiResponse BakongResponse
+
+	_, err = utils.JsonUnmarshal(body, &apiResponse)
+	if err != nil {
+		return false, fmt.Errorf("Error decoding response")
+	}
+
+	if apiResponse.ResponseCode == nil {
+		return false, fmt.Errorf("response missing responseCode")
+	}
+
+	if (*apiResponse.ResponseCode == 0 && apiResponse.ResponseMessage == "Account ID exists") {
+		return true, nil
+	} else {
+		return false, err
+	}
 }

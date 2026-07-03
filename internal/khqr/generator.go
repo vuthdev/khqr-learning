@@ -3,7 +3,6 @@ package khqr
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 type IndividualInfo struct {
@@ -16,98 +15,58 @@ type IndividualInfo struct {
 }
 
 func GenerateIndividual(info IndividualInfo) (string, error) {
-	var sb strings.Builder
+	newQr, err := Builder().
+		Individual(
+			info.BakongAccountID,
+		).
+		MerchantName(info.MerchantName).
+		MerchantCity(info.MerchantCity).
+		Amount(info.Amount).
+		Currency(info.Currency).
+		BillNumber(info.BillNumber).Build()
 
-	sb.WriteString(tlv(TagPayloadFormatIndicator, "01"))
-	sb.WriteString(tlv(TagPointofInitiationMethod, "12"))
 
-	IndividualInfoString := fmt.Sprintf("00%02d%s", len(info.BakongAccountID), info.BakongAccountID)	
-
-	sb.WriteString(tlv(TagIndividual, IndividualInfoString))
-
-	sb.WriteString(tlv(TagMerchantCategoryCode, "5999"))
-
-	trxn_ccy, err := currencyString(info.Currency)
 	if err != nil {
-		fmt.Println("Error: wrong currency")
+		return "", fmt.Errorf("Error generating KHQR")
 	}
-	sb.WriteString(tlv(TagTransactionCurrency, trxn_ccy))
 
-	amountString := fmt.Sprintf("%.2f", info.Amount)
-	sb.WriteString(tlv(TagTransactionAmount, amountString))
+	fmt.Printf("Generated QR string: %v\n", newQr)
 
-	sb.WriteString(tlv(TagCountryCode, "KH"))
-
-	sb.WriteString(tlv(TagMerchantName, info.MerchantName))
-	sb.WriteString(tlv(TagMerchantCity, info.MerchantCity))
-
-	additional_data := fmt.Sprintf("01%02d%s", len(info.BillNumber), info.BillNumber)
-	sb.WriteString(tlv(TagAdditionalData, additional_data))
-
-	finalPayload := sb.String()
-	payloadForCRC := finalPayload + checksumPlaceholder()
-
-	data := []byte(payloadForCRC)
-	hexCode := fmt.Sprintf("%04X", crc16Hex(data))  // turn it into "3449" style text
-	fullQR := string(finalPayload) + tlv(TagCRCchecksum, hexCode)
-
-	return fullQR, nil
+	return newQr, nil
 }
 
-
 type MerchantInfo struct {
-	IndividualInfo
+	AccountID string
 	MerchantID    string
 	AcquiringBank string
+	MerchantName    string  // display name, e.g. "Kimhak"
+	MerchantCity    string  // e.g. "Phnom Penh"
+	Amount          float64 // 0 for a static/no-fixed-amount QR
+	Currency        string  // "USD" or "KHR"
+	BillNumber      string
 }
 
 func GenerateMerchant(info MerchantInfo) (string, error) {
-	var sb strings.Builder
-
-	sb.WriteString(tlv(TagPayloadFormatIndicator, "01"))
-	sb.WriteString(tlv(TagPointofInitiationMethod, "12"))
-
-	sb.WriteString(
-		tlv(
-			TagMerchantAccountInfo,
-			tlv(Tag2930BakongAccountId, info.BakongAccountID) +
-			tlv(Tag2930MerchantId, info.MerchantID) +
-			tlv(Tag2930AcquiringBankName, info.AcquiringBank),
-		),
-	)
-
-	sb.WriteString(tlv(TagMerchantCategoryCode, "5999"))
+	newQr, err := Builder().
+		Merchant(
+			info.AccountID,
+			info.MerchantID,
+			info.AcquiringBank,
+		).
+		MerchantName(info.MerchantName).
+		MerchantCity(info.MerchantCity).
+		Amount(info.Amount).
+		Currency(info.Currency).
+		BillNumber(info.BillNumber).Build()
 
 
-	trxn_ccy, err := currencyString(info.Currency)
 	if err != nil {
-		fmt.Println("Error: wrong currency")
+		return "", fmt.Errorf("Error generating KHQR")
 	}
-	sb.WriteString(tlv(TagTransactionCurrency, trxn_ccy))
 
-	amountString := fmt.Sprintf("%.2f", info.Amount)
-	sb.WriteString(tlv(TagTransactionAmount, amountString))
+	fmt.Printf("Generated QR string: %v\n", newQr)
 
-	sb.WriteString(tlv(TagCountryCode, "KH"))
-
-	sb.WriteString(tlv(TagMerchantName, info.MerchantName))
-	sb.WriteString(tlv(TagMerchantCity, info.MerchantCity))
-
-	sb.WriteString(
-		tlv(
-			TagAdditionalData,
-			tlv(Tag62BillNumber, info.BillNumber),
-		),
-	)
-
-	finalPayload := sb.String()
-	payloadForCRC := finalPayload + checksumPlaceholder()
-
-	data := []byte(payloadForCRC)
-	hexCode := fmt.Sprintf("%04X", crc16Hex(data))  // turn it into "3449" style text
-	fullQR := string(finalPayload) + tlv(TagCRCchecksum, hexCode)
-
-	return fullQR, nil
+	return newQr, nil
 }
 
 func currencyString(currency string) (string, error) {
