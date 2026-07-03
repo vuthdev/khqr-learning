@@ -47,12 +47,12 @@ func main() {
 	hashIndi := khqr.HashMD5(qr)
 	hashMerc := khqr.HashMD5(merchantQr)
 	fmt.Println("MD5 for Individual:", hashIndi)
-	fmt.Println("MD5 for Individual:", hashMerc)
+	fmt.Println("MD5 for Merchant:", hashMerc)
 
 	var token string = os.Getenv("BAKONG_TOKEN")
 
 	client := bakong.NewClient(token)
-	check_account, err := client.CheckAccountByID("sereyvuth_duong@bkrt")
+	check_account, err := client.CheckAccountByID("testvuthvuth@devb")
 	if err != nil {
 		fmt.Printf("Error trying to check account: %v\n", err)
 		return
