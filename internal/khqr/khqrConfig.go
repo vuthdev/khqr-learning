@@ -15,15 +15,21 @@ const (
 	TagMerchantCity KHQRTag = "60"
 	TagAdditionalData KHQRTag = "62"
 	TagCRCchecksum KHQRTag = "63"
+	TagKhqrSpecific KHQRTag = "99"
 
 	// Account Info Tags
 	Tag2930BakongAccountId KHQRTag = "00"
 	Tag2930MerchantId KHQRTag = "01"
 	Tag2930AcquiringBankName KHQRTag = "02"
 
+
 	// Additional Data Tags
 	Tag62BillNumber KHQRTag = "01"
 	Tag62MobileNumber KHQRTag = "02"
 	Tag62StoreLabel KHQRTag = "03"
 	Tag62TerminalLabel KHQRTag = "07"
+
+	// Khqr-Specific
+	TagKhqrSpecific99_00 KHQRTag = "00"
+	TagKhqrSpecific99_01 KHQRTag = "01"
 )

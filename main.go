@@ -18,12 +18,12 @@ func main() {
 	}
 
 	qr, err := khqr.GenerateIndividual(khqr.IndividualInfo{
-		BakongAccountID: "Sereyvuth@dev",
+		BakongAccountID: "sereyvuth_duong@bkrt",
 		MerchantName:    "Sereyvuth Duong",
 		MerchantCity:    "Phnom Penh",
 		Amount:          1.00,
 		Currency:        "USD",
-		BillNumber:      "TEST001",
+		//BillNumber:      "TEST001",
 	})
 	if err != nil {
 		fmt.Println("generate error:", err)
@@ -32,8 +32,8 @@ func main() {
 
 	merchantQr, err := khqr.GenerateMerchant(
 		khqr.MerchantInfo{
-			AccountID: "Sereyvuth@aba",
-			MerchantName:    "Test Name",
+			AccountID: "sereyvuth_duong@bkrt",
+			MerchantName:    "Sereyvuth Duong",
 			MerchantCity:    "Phnom Penh",
 			Amount:          1.00,
 			Currency:        "USD",
@@ -52,7 +52,7 @@ func main() {
 	var token string = os.Getenv("BAKONG_TOKEN")
 
 	client := bakong.NewClient(token)
-	check_account, err := client.CheckAccountByID("testvuthvuth@devb")
+	check_account, err := client.CheckAccountByID("sereyvuth_duong@bkrt")
 	if err != nil {
 		fmt.Printf("Error trying to check account: %v\n", err)
 		return

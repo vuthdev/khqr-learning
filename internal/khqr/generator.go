@@ -23,7 +23,8 @@ func GenerateIndividual(info IndividualInfo) (string, error) {
 		MerchantCity(info.MerchantCity).
 		Amount(info.Amount).
 		Currency(info.Currency).
-		BillNumber(info.BillNumber).Build()
+		// BillNumber(info.BillNumber)
+		Build()
 
 
 	if err != nil {
@@ -57,7 +58,8 @@ func GenerateMerchant(info MerchantInfo) (string, error) {
 		MerchantCity(info.MerchantCity).
 		Amount(info.Amount).
 		Currency(info.Currency).
-		BillNumber(info.BillNumber).Build()
+		// BillNumber(info.BillNumber).
+		Build()
 
 
 	if err != nil {

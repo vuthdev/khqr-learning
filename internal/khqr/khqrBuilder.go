@@ -3,6 +3,7 @@ package khqr
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 type KHQRBuilder struct {
@@ -55,15 +56,16 @@ func (b *KHQRBuilder) Currency(currency string) *KHQRBuilder {
 	return b
 }
 
-func (b *KHQRBuilder) BillNumber(billNumber string) *KHQRBuilder {
-	b.billNumber = billNumber
-	return b
-}
+// func (b *KHQRBuilder) BillNumber(billNumber string) *KHQRBuilder {
+// 	b.billNumber = billNumber
+// 	return b
+// }
 
 func (b *KHQRBuilder) Build() (string, error) {
 	var sb strings.Builder
 
 	sb.WriteString(tlv(TagPayloadFormatIndicator, "01"))
+
 	sb.WriteString(tlv(TagPointofInitiationMethod, "12"))
 
 	if b.isMerchant {
@@ -95,10 +97,21 @@ func (b *KHQRBuilder) Build() (string, error) {
 	sb.WriteString(tlv(TagMerchantName, b.merchantName))
 	sb.WriteString(tlv(TagMerchantCity, b.merchantCity))
 
+	// sb.WriteString(
+	// 	tlv(
+	// 		TagAdditionalData,
+	// 		tlv(Tag62BillNumber, b.billNumber),
+	// 	),
+	// )
+
+	now := time.Now()
+	expires := now.AddDate(0, 0, 1)
+
 	sb.WriteString(
 		tlv(
-			TagAdditionalData,
-			tlv(Tag62BillNumber, b.billNumber),
+			TagKhqrSpecific, 
+			tlv(TagKhqrSpecific99_00, fmt.Sprint(now.UnixMilli())) +
+			tlv(TagKhqrSpecific99_01, fmt.Sprint(expires.UnixMilli())),
 		),
 	)
 
