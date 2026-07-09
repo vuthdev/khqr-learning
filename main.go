@@ -22,7 +22,7 @@ func main() {
 	outputFolder := "qrcodes"
 	fileName := "my_khqr_invoice.png"
 
-	err = os.Mkdir(outputFolder, os.ModePerm) 
+	err = os.MkdirAll(outputFolder, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Failed to create folder: %v", err)
 	}
@@ -44,7 +44,7 @@ func main() {
 	// fmt.Println("QR:", merchantQr)
 
 	// hashMerc := khqr.HashMD5(merchantQr)
-	
+
 	// fmt.Println("MD5 for Merchant:", hashMerc)
 
 	var token string = os.Getenv("BAKONG_TOKEN")
